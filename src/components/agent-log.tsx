@@ -71,23 +71,23 @@ export function AgentLog({ ride, otp }: { ride: RideDoc | null; otp: string | nu
 
     if (ride.status === 'requested') {
       const step = ride.agentStep ?? null;
-      out.push({ key: 'reading', ts: tsFor(ride, 'reading'), text: 'Reading rider request…', active: step == null });
+      out.push({ key: 'reading', ts: tsFor(ride, 'reading'), text: `Reading request · ${ride.pickup.name} → ${ride.drop.name} · ${ride.distanceKm.toFixed(1)} km · ₹${ride.fareInr}`, active: step == null });
       if (step === 'reading' || step === 'searching' || step === 'found') {
-        out.push({ key: 'searching', ts: tsFor(ride, 'searching'), text: `Searching for online drivers near ${ride.pickup.name}…`, active: step === 'reading' });
+        out.push({ key: 'searching', ts: tsFor(ride, 'searching'), text: `Filtering fleet near ${ride.pickup.name} · safety ≥ 4.7 · trained · within 1.5 km`, active: step === 'reading' });
       }
       if (step === 'searching' || step === 'found') {
-        out.push({ key: 'found', ts: tsFor(ride, 'found'), text: `Found nearest driver: Priya Devi · 0.3 km away`, active: step === 'searching' });
+        out.push({ key: 'found', ts: tsFor(ride, 'found'), text: `Selected Priya Devi · 0.3 km · ★4.9 · 47 rides this week · trained Apr 2026 · Kannada+Hindi`, active: step === 'searching' });
       }
       if (step === 'found') {
-        out.push({ key: 'dispatch', ts: tsFor(ride, 'dispatch'), text: 'Connecting Priya to Aanya…', active: true });
+        out.push({ key: 'dispatch', ts: tsFor(ride, 'dispatch'), text: 'Sending to Priya · 60-second accept window', active: true });
       }
       return out;
     }
 
-    out.push({ key: 'reading', ts: tsFor(ride, 'reading'), text: 'Read rider request' });
-    out.push({ key: 'searching', ts: tsFor(ride, 'searching'), text: `Searched fleet near ${ride.pickup.name}` });
-    out.push({ key: 'found', ts: tsFor(ride, 'found'), text: `Selected Priya Devi · 0.3 km away` });
-    out.push({ key: 'dispatch', ts: tsFor(ride, 'dispatch'), text: 'Sent ride request to Priya' });
+    out.push({ key: 'reading', ts: tsFor(ride, 'reading'), text: `Read request · ${ride.pickup.name} → ${ride.drop.name} · ₹${ride.fareInr}` });
+    out.push({ key: 'searching', ts: tsFor(ride, 'searching'), text: `Filtered fleet near ${ride.pickup.name} · safety ≥ 4.7` });
+    out.push({ key: 'found', ts: tsFor(ride, 'found'), text: `Selected Priya Devi · 0.3 km · ★4.9 · trained Apr 2026 · Kannada+Hindi` });
+    out.push({ key: 'dispatch', ts: tsFor(ride, 'dispatch'), text: 'Sent to Priya · 60-second accept window' });
 
     if (ride.status === 'dispatching') {
       out.push({

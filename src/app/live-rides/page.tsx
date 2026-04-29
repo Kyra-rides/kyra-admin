@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AgentLog } from '@/components/agent-log';
 import { FleetMap } from '@/components/fleet-map';
@@ -13,6 +13,11 @@ import {
   subscribeRideSecret,
   type RideDoc,
 } from '@/lib/ride-firestore';
+import {
+  playAcceptChime,
+  playCompleteChime,
+  playNewRideChime,
+} from '@/lib/sounds';
 
 export default function LiveRidesPage() {
   const [ride, setRide] = useState<RideDoc | null>(null);
@@ -39,6 +44,28 @@ export default function LiveRidesPage() {
 
   // Drive the dispatch automation: agent theater → OTP gen → OTP verify.
   useRideOrchestrator(ride, otp);
+
+  // Subtle audio cues at the demo's three peak moments. Browsers gate audio
+  // behind a user gesture; sounds.ts swallows the failure if the page hasn't
+  // received a click yet, so this never crashes the demo.
+  const lastSeenStateRef = useRef<{ id: string | null; status: string | null }>({ id: null, status: null });
+  useEffect(() => {
+    const prev = lastSeenStateRef.current;
+    const now = { id: ride?.id ?? null, status: ride?.status ?? null };
+    // New ride request just landed.
+    if (now.id && now.id !== prev.id && now.status === 'requested') {
+      playNewRideChime();
+    }
+    // Same ride transitioned: dispatching → accepted.
+    if (now.id && now.id === prev.id && prev.status === 'dispatching' && now.status === 'accepted') {
+      playAcceptChime();
+    }
+    // Same ride transitioned: in_progress → completed.
+    if (now.id && now.id === prev.id && prev.status === 'in_progress' && now.status === 'completed') {
+      playCompleteChime();
+    }
+    lastSeenStateRef.current = now;
+  }, [ride?.id, ride?.status]);
 
   const isActive =
     ride != null &&
