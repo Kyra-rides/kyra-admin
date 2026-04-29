@@ -89,7 +89,8 @@ export function FleetMap({ ride }: { ride: RideDoc | null }) {
     drop: google.maps.Marker | null;
     driver: google.maps.Marker | null;
     polyline: google.maps.Polyline | null;
-  }>({ pickup: null, drop: null, driver: null, polyline: null });
+    trail: google.maps.Polyline | null;
+  }>({ pickup: null, drop: null, driver: null, polyline: null, trail: null });
   const fleetPinsRef = useRef<google.maps.Marker[]>([]);
   const animRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +145,8 @@ export function FleetMap({ ride }: { ride: RideDoc | null }) {
     pins.drop?.setMap(null);
     pins.driver?.setMap(null);
     pins.polyline?.setMap(null);
-    ridePinsRef.current = { pickup: null, drop: null, driver: null, polyline: null };
+    pins.trail?.setMap(null);
+    ridePinsRef.current = { pickup: null, drop: null, driver: null, polyline: null, trail: null };
     if (animRef.current) {
       cancelAnimationFrame(animRef.current);
       animRef.current = null;
@@ -218,13 +220,33 @@ export function FleetMap({ ride }: { ride: RideDoc | null }) {
       });
       ridePinsRef.current.driver = driverMarker;
 
+      // Trail of where the driver has been — sampled once per second so the
+      // polyline stays small (~30 points over a 30-60s ride) and the line
+      // looks deliberate rather than jittery.
+      const trail = new g.Polyline({
+        path: [startPos],
+        strokeColor: '#CEB37E',
+        strokeOpacity: 0.9,
+        strokeWeight: 5,
+        map,
+        zIndex: 22,
+      });
+      ridePinsRef.current.trail = trail;
+
       // Linear interpolation over the ride window. Easy mock for "live tracking".
       const t0 = performance.now();
+      let lastSample = t0;
       const tick = () => {
-        const t = Math.min(1, (performance.now() - t0) / durationMs);
+        const now = performance.now();
+        const t = Math.min(1, (now - t0) / durationMs);
         const lat = startPos.lat + (endPos.lat - startPos.lat) * t;
         const lng = startPos.lng + (endPos.lng - startPos.lng) * t;
         driverMarker.setPosition({ lat, lng });
+        if (now - lastSample >= 1000) {
+          lastSample = now;
+          const path = trail.getPath();
+          path.push(new g.LatLng(lat, lng));
+        }
         if (t < 1) {
           animRef.current = requestAnimationFrame(tick);
         }

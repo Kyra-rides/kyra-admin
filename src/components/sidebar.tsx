@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const NAV: Array<{ href: string; label: string; icon: string }> = [
   { href: '/', label: 'Dashboard', icon: 'M3 11l9-8 9 8M5 9.5V21h14V9.5' },
@@ -13,8 +14,31 @@ const NAV: Array<{ href: string; label: string; icon: string }> = [
   { href: '/reports', label: 'Reports', icon: 'M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-9 4h12a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v14a2 2 0 002 2z' },
 ];
 
+// Initial values render identically on server and client (no hydration risk).
+// Once mounted, we tick the "paid out" counter every 8s by a small random
+// amount so the dashboard feels alive even when no demo ride is in flight.
+const INITIAL_PAID_INR = 421840;
+const INITIAL_WOMEN_EARNING = 247;
+
 export function Sidebar() {
   const pathname = usePathname();
+  const [paid, setPaid] = useState(INITIAL_PAID_INR);
+  const [women, setWomen] = useState(INITIAL_WOMEN_EARNING);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const paidT = setInterval(() => {
+      setPaid((p) => p + Math.floor(80 + Math.random() * 220));
+    }, 8000);
+    const womenT = setInterval(() => {
+      setWomen((w) => w + (Math.random() < 0.3 ? 1 : 0));
+    }, 30000);
+    return () => {
+      clearInterval(paidT);
+      clearInterval(womenT);
+    };
+  }, []);
 
   return (
     <aside className="w-60 shrink-0 border-r border-burgundy-light/60 bg-burgundy-dark/60 flex flex-col">
@@ -59,10 +83,49 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-burgundy-light/60 text-[11px] text-beige-muted">
+      <div className="px-4 py-4 border-t border-burgundy-light/60 space-y-2.5">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-beige-muted">
+          Today across Kyra
+        </div>
+        <Stat label="Women earning" value={women.toLocaleString('en-IN')} accent="success" />
+        <Stat
+          label="Paid to drivers"
+          value={`₹${paid.toLocaleString('en-IN')}`}
+          live={mounted}
+        />
+        <Stat label="Open SOS" value="0" accent="success" />
+      </div>
+
+      <div className="px-4 py-3 border-t border-burgundy-light/60 text-[11px] text-beige-muted">
         <div>Signed in as</div>
         <div className="text-beige">Shivansh · Ops admin</div>
       </div>
     </aside>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+  live,
+}: {
+  label: string;
+  value: string;
+  accent?: 'success' | 'gold';
+  live?: boolean;
+}) {
+  const valueColor =
+    accent === 'success' ? 'text-success' : accent === 'gold' ? 'text-gold' : 'text-beige';
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-[11px] text-beige-muted truncate">{label}</span>
+      <span className={`text-sm tabular-nums ${valueColor} flex items-center gap-1.5`}>
+        {value}
+        {live ? (
+          <span className="w-1 h-1 rounded-full bg-success animate-pulse" aria-hidden />
+        ) : null}
+      </span>
+    </div>
   );
 }
