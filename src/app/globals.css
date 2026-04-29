@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
+@theme {
+  --color-burgundy-dark: #21080C;
+  --color-burgundy: #2F0E13;
+  --color-burgundy-light: #45171E;
+  --color-burgundy-soft: #5B2A30;
+  --color-beige: #E8DAC9;
+  --color-beige-muted: #C5A886;
+  --color-gold: #CEB37E;
+  --color-border-warm: #846847;
+  --color-success: #5BD2A2;
+  --color-danger: #E07A6A;
+
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Libre Baskerville", Georgia, "Times New Roman", serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html, body {
+  background: var(--color-burgundy-dark);
+  color: var(--color-beige);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Subtle scrollbar that matches the dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::-webkit-scrollbar-track {
+  background: var(--color-burgundy-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-burgundy-light);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-burgundy-soft);
 }
